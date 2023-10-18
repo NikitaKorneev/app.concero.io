@@ -1,16 +1,21 @@
 import { FC, ReactNode } from 'react'
 import classNames from './CardHeader.module.pcss'
+import { LoadingAnimation } from '../../layout/LoadingAnimation/LoadingAnimation'
 
 interface CardHeaderProps {
-  title: string
-  children?: ReactNode
+	title?: string
+	children?: ReactNode
+	isLoading?: boolean
 }
 
-export const CardHeader: FC<CardHeaderProps> = ({ title, children }) => (
-  <div className={classNames.cardHeader}>
-    <div className={classNames.titleContainer}>
-      <h5>{title}</h5>
-    </div>
-    {children}
-  </div>
+export const CardHeader: FC<CardHeaderProps> = ({ title = null, children, isLoading = false }) => (
+	<div className={classNames.cardHeader}>
+		{title ? (
+			<div className={classNames.titleContainer}>
+				<h5>{title}</h5>
+				<div>{isLoading ? <LoadingAnimation size={13} color={'var(--color-text-secondary)'} /> : null}</div>
+			</div>
+		) : null}
+		{children}
+	</div>
 )

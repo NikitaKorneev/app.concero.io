@@ -1,73 +1,91 @@
-import { FC, useEffect } from 'react'
+import { FC, memo, useCallback, useEffect, useState } from 'react'
+import { IconChevronDown } from '@tabler/icons-react'
 import { Chart } from '../../layout/Chart/Chart'
 import classNames from './StakingChartCard.module.pcss'
 import { Button } from '../../buttons/Button/Button'
 import { StakingChartCardProps } from './types'
-import { getSelectedStyle } from './handlers'
-import { buttonsData } from './constants'
 import { useChartReducer } from './chartReducer/chartReducer'
-import { fetchData } from './fetchData'
+import { getData } from './getData'
 import { switchChartType } from './switchChartType'
+import { buttonsData } from './constants'
+import { ListModal } from '../../modals/ListModal/ListModal'
+import { RowComponent } from './RowComponent/RowConponent'
+import { CardHeader } from '../CardHeader/CardHeader'
+
+const MemoizedChart = memo(Chart)
 
 export const StakingChartCard: FC<StakingChartCardProps> = ({ selectedVault }) => {
-  const [{ data, chartType, response }, dispatch] = useChartReducer()
+	const [chartState, dispatch] = useChartReducer()
+	const { data, chartType, response, isTypeModalVisible } = chartState
+	const [selectedItems, setSelectedItems] = useState([buttonsData[chartType]])
 
-  const setData = (data) => {
-    dispatch({
-      type: 'SET_DATA',
-      payload: data,
-    })
-  }
+	const setData = useCallback(
+		data => {
+			dispatch({ type: 'SET_DATA', payload: data })
+		},
+		[dispatch],
+	)
 
-  const setChartType = (type) => {
-    dispatch({
-      type: 'SET_CHART_TYPE',
-      payload: type,
-    })
-  }
+	const setChartType = useCallback(
+		type => {
+			dispatch({ type: 'SET_CHART_TYPE', payload: type })
+		},
+		[dispatch],
+	)
 
-  const setResponse = (r) => {
-    dispatch({
-      type: 'SET_RESPONSE',
-      payload: r,
-    })
-  }
+	const setIsTypeModalVisible = useCallback(
+		isVisible => {
+			dispatch({ type: 'SET_IS_TYPE_MODAL_VISIBLE', payload: isVisible })
+		},
+		[dispatch],
+	)
 
-  useEffect(() => {
-    fetchData({
-      selectedVault,
-      setResponse,
-    })
-  }, [selectedVault])
+	const handleTypeButtonClick = useCallback(() => {
+		setIsTypeModalVisible(true)
+	}, [setIsTypeModalVisible])
 
-  useEffect(() => {
-    switchChartType({
-      chartType,
-      response,
-      setData,
-    })
-  }, [response, chartType])
+	const getItems = useCallback(() => buttonsData, [])
 
-  return (
-    <div className={`card ${classNames.container}`}>
-      <div className={classNames.headerContainer}>
-        <h5 className={'cardHeaderTitle'}>Chart</h5>
-        <div className={classNames.tagsContainer}>
-          {buttonsData.map((button) => (
-            <Button
-              key={button.title}
-              size={'sm'}
-              variant={getSelectedStyle(chartType === button.type)}
-              onClick={() => setChartType(button.type)}
-            >
-              {button.title}
-            </Button>
-          ))}
-        </div>
-      </div>
-      <div className={classNames.chartContainer}>
-        <Chart data={data.main} secondData={data.secondary} />
-      </div>
-    </div>
-  )
+	const handleSelectType = useCallback(
+		item => {
+			setIsTypeModalVisible(false)
+			setChartType(item.type)
+			setSelectedItems([item])
+		},
+		[setIsTypeModalVisible, setChartType],
+	)
+
+	useEffect(() => {
+		getData({ selectedVault, dispatch })
+	}, [selectedVault.address])
+
+	useEffect(() => {
+		switchChartType({ chartType, response, setData })
+	}, [response, chartType])
+
+	return (
+		<div className={`card ${classNames.container}`}>
+			<div className={classNames.headerContainer}>
+				<CardHeader tiztle="Chart" isLoading={chartState.isLoading} />
+				<div className={classNames.tagsContainer}>
+					<Button variant="subtle" size="sm" rightIcon={<IconChevronDown size={16} />} onClick={handleTypeButtonClick}>
+						{buttonsData[chartType].title}
+					</Button>
+				</div>
+			</div>
+			<div className={classNames.chartContainer}>
+				<MemoizedChart data={data.main} secondData={data.secondary} />
+			</div>
+			<ListModal
+				isOpen={isTypeModalVisible}
+				setIsOpen={setIsTypeModalVisible}
+				getItems={getItems}
+				RenderItem={RowComponent}
+				selectedItems={selectedItems}
+				onSelect={handleSelectType}
+				isSearchable={false}
+				title="Select chart type"
+			/>
+		</div>
+	)
 }

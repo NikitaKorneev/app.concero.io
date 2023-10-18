@@ -1,32 +1,61 @@
-import { Dispatch, FC } from 'react'
+import { Dispatch, memo, UIEvent, useEffect, useState } from 'react'
+import { useAccount } from 'wagmi'
 import classNames from './StakingOpportunitiesCard.module.pcss'
 import { FilteredTags } from './FilteredTags/FilteredTags'
 import { StakingCard } from '../StakingCard/StakingCard'
-import { Filter, Protocol, Vault } from '../../screens/StakingScreen/stakingReducer/types'
+import { StakingAction, StakingState, Vault } from '../../screens/StakingScreen/stakingReducer/types'
+import { getMoreVaults, getVaults } from './getVaults'
+import { CardHeader } from '../CardHeader/CardHeader'
+import { useMediaQuery } from '../../../hooks/useMediaQuery'
 
 interface StakingOpportunitiesProps {
-  selectedVault: Vault
-  vaults: Vault[]
-  protocols: Protocol
-  dispatch: Dispatch<any>
-  filter: Filter
+	stakingState: StakingState
+	stakingDispatch: Dispatch<StakingAction>
 }
 
-export const StakingOpportunitiesCard: FC<StakingOpportunitiesProps> = ({ selectedVault, vaults, protocols, dispatch, filter }) => {
-  const handleSelect = (vault) => {
-    if (selectedVault?.id === vault.id) dispatch({ type: 'SET_SELECTED_VAULT', payload: null })
-    else dispatch({ type: 'SET_SELECTED_VAULT', payload: vault })
-  }
+const MemoizedStakingCard = memo(StakingCard)
 
-  return (
-    <div className={`card ${classNames.container}`}>
-      <h5 className="cardHeaderTitle">Staking opportunities</h5>
-      <FilteredTags dispatch={dispatch} filter={filter} />
-      <div className={classNames.stakingCardsContainer}>
-        {vaults.map((vault) => (
-          <StakingCard key={vault.id} isSelected={selectedVault?.id === vault.id} vault={vault} onClick={handleSelect} protocols={protocols} />
-        ))}
-      </div>
-    </div>
-  )
+export function StakingOpportunitiesCard({ stakingState, stakingDispatch }: StakingOpportunitiesProps) {
+	const isIpad = useMediaQuery('ipad')
+	const { selectedVault, vaults } = stakingState
+	const { address } = useAccount()
+	const [offset, setOffset] = useState(0)
+	const limit = 15
+
+	function handleSelect(vault: Vault) {
+		stakingDispatch({ type: 'SET_SELECTED_VAULT', payload: vault })
+	}
+
+	function handleEndReached() {
+		const newOffset = offset + limit
+		setOffset(newOffset)
+		getMoreVaults(stakingDispatch, address, stakingState, newOffset, limit)
+	}
+
+	function handleScroll(e: UIEvent<HTMLDivElement>) {
+		const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+		const scrollTolerance = 10
+
+		if (scrollHeight - scrollTop <= clientHeight + scrollTolerance) {
+			handleEndReached()
+		}
+	}
+
+	useEffect(() => {
+		setOffset(0)
+		getVaults(stakingDispatch, address as string, stakingState, 0, limit, isIpad)
+	}, [stakingState.filter, stakingState.balances])
+
+	return (
+		<div className={`card ${classNames.container}`}>
+			<CardHeader title="Staking opportunities" isLoading={stakingState.loading}>
+				<FilteredTags stakingDispatch={stakingDispatch} stakingState={stakingState} />
+			</CardHeader>
+			<div className={classNames.stakingCardsContainer} onScroll={handleScroll}>
+				{vaults?.map((vault: Vault) => (
+					<MemoizedStakingCard key={vault._id} isSelected={selectedVault?._id === vault._id} vault={vault} onClick={handleSelect} />
+				))}
+			</div>
+		</div>
+	)
 }

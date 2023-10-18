@@ -1,35 +1,47 @@
-import { FC } from 'react'
+import { FC, lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { ExchangeScreen } from './components/screens/ExchangeScreen/ExchangeScreen'
 import { AppScreen } from './components/screens/AppScreen/AppScreen'
 import { Header } from './components/layout/Header/Header/Header'
 import { routes } from './constants/routes'
-import { PortfolioScreen } from './components/screens/PortfolioScreen/PortfolioScreen'
-import { StakingScreen } from './components/screens/StakingScreen/StakingScreen'
+import { FullScreenLoader } from './components/layout/FullScreenLoader/FullScreenLoader'
+
+const ExchangeScreen = lazy(() => import('./components/screens/ExchangeScreen/ExchangeScreen').then(module => ({ default: module.ExchangeScreen })))
+const PortfolioScreen = lazy(() => import('./components/screens/PortfolioScreen/PortfolioScreen').then(module => ({ default: module.PortfolioScreen })))
+const StakingScreen = lazy(() => import('./components/screens/StakingScreen/StakingScreen').then(module => ({ default: module.StakingScreen })))
 
 export interface NavigatorProps {}
 
-export const Navigator: FC<NavigatorProps> = ({}) => (
-  // const { modalState, modalDispatch } = useContext(ModalContext)
-  <BrowserRouter>
-    <AppScreen>
-      <Header />
-      <Routes>
-        <Route path={routes.exchange} element={<ExchangeScreen />} />
-        <Route path={routes.portfolio} element={<PortfolioScreen />} />
-        <Route path={routes.staking} element={<StakingScreen />} />
-        <Route path={routes.root} element={<Navigate to={routes.exchange} />} />
-      </Routes>
-      {/* todo: : may be a good idea to have 1 top level modal with context, issue is - everything rerenders when modal is open */}
-      {/* <EntityListModal */}
-      {/*  animate={false} */}
-      {/*  title={`Select ${modalState.entityType}`} */}
-      {/*  data={modalState.data} */}
-      {/*  columns={modalState.entityType === 'chain' ? ChainColumns : TokenColumns} */}
-      {/*  show={modalState.show} */}
-      {/*  setShow={(value) => modalDispatch({ type: 'SET_SHOW', payload: value })} */}
-      {/*  onSelect={(entity) => modalDispatch({ type: 'SET_ENTITY', payload: entity })} */}
-      {/* /> */}
-    </AppScreen>
-  </BrowserRouter>
+export const Navigator: FC<NavigatorProps> = () => (
+	<BrowserRouter>
+		<AppScreen>
+			<Header />
+			<Routes>
+				<Route
+					path={routes.exchange}
+					element={
+						<Suspense fallback={<FullScreenLoader />}>
+							<ExchangeScreen />
+						</Suspense>
+					}
+				/>
+				<Route
+					path={routes.portfolio}
+					element={
+						<Suspense fallback={<FullScreenLoader />}>
+							<PortfolioScreen />
+						</Suspense>
+					}
+				/>
+				<Route
+					path={routes.staking}
+					element={
+						<Suspense fallback={<FullScreenLoader />}>
+							<StakingScreen />
+						</Suspense>
+					}
+				/>
+				<Route path={routes.root} element={<Navigate to={routes.exchange} />} />
+			</Routes>
+		</AppScreen>
+	</BrowserRouter>
 )

@@ -1,51 +1,81 @@
-import { FC } from 'react'
+import { FC, memo, useEffect, useMemo } from 'react'
+import { useAccount } from 'wagmi'
+import { useStakingReducer } from './stakingReducer/stakingReducer'
+import { useMediaQuery } from '../../../hooks/useMediaQuery'
 import classNames from './StakingScreen.module.pcss'
 import { StakingOpportunitiesCard } from '../../cards/StakingOpportunitesCard/StakingOpportunitiesCard'
 import { StakingHeaderCard } from '../../cards/StakingHeaderCard/StakingHeaderCard'
 import { StakingChartCard } from '../../cards/StakingChartCard/StakingChartCard'
-import { StakingHighlightsCard } from '../../cards/StakingHighlightsCard/StakingHighlightsCard'
-import { RatioCard } from '../../cards/RatioCard/RatioCard'
-import { DetailsCard } from '../../cards/DetailsCard/DetailsCard'
-import { useStakingReducer } from './stakingReducer/stakingReducer'
-import { useMediaQuery } from '../../../hooks/useMediaQuery'
+import { withErrorBoundary } from '../../wrappers/WithErrorBoundary'
+import { StakingDetailsCard } from '../../cards/StakingDetailsCard/StakingDetailsCard'
+
+const Header = memo(withErrorBoundary(StakingHeaderCard))
+// const Highlights = memo(withErrorBoundary(StakingHighlightsCard))
+// const Ratio = memo(withErrorBoundary(RatioCard))
+const Details = memo(withErrorBoundary(StakingDetailsCard))
 
 export const StakingScreen: FC = () => {
-  const [{ selectedVault, vaults, protocols, filter }, dispatch] = useStakingReducer()
-  const isDesktop = useMediaQuery('mobile') // Adjust this as per your specific media query needs
+	const [stakingState, stakingDispatch] = useStakingReducer()
+	const { address } = useAccount()
+	const isMobile = useMediaQuery('mobile')
+	const isIpad = useMediaQuery('ipad')
+	const Chart = memo(withErrorBoundary(StakingChartCard))
 
-  const desktopLayout = (
-    <div className={classNames.container}>
-      <StakingOpportunitiesCard vaults={vaults} selectedVault={selectedVault} protocols={protocols} dispatch={dispatch} filter={filter} />
-      {selectedVault ? (
-        <div className={classNames.stacksContainer}>
-          <div className={classNames.mainCardStack}>
-            <StakingHeaderCard vault={selectedVault} protocols={protocols} />
-            <StakingChartCard selectedVault={selectedVault} />
-          </div>
-          <div className={classNames.secondaryCardStack}>
-            <StakingHighlightsCard />
-            <RatioCard />
-            <DetailsCard />
-          </div>
-        </div>
-      ) : null}
-    </div>
-  )
+	useEffect(() => {
+		stakingDispatch({ type: 'SET_ADDRESS', payload: address })
+	}, [address])
 
-  const mobileLayout = (
-    <div className={classNames.container}>
-      <StakingOpportunitiesCard vaults={vaults} selectedVault={selectedVault} protocols={protocols} dispatch={dispatch} filter={filter} />
-      {selectedVault ? (
-        <div className={classNames.mainCardStack}>
-          <StakingHeaderCard vault={selectedVault} protocols={protocols} />
-          <StakingChartCard selectedVault={selectedVault} />
-          <StakingHighlightsCard />
-          <RatioCard />
-          <DetailsCard />
-        </div>
-      ) : null}
-    </div>
-  )
+	const mobileVaultDetails = (
+		<div className={classNames.stacksContainer}>
+			<div className={classNames.mainCardStack}>
+				<Header stakingState={stakingState} stakingDispatch={stakingDispatch} />
+				<Chart selectedVault={stakingState.selectedVault} />
+			</div>
+			<Details stakingState={stakingState} />
+		</div>
+	)
 
-  return <div style={{ width: '100%', height: '100%' }}>{isDesktop ? desktopLayout : mobileLayout}</div>
+	const mobileLayout = (
+		<div className={classNames.container}>
+			{stakingState.selectedVault ? mobileVaultDetails : <StakingOpportunitiesCard stakingState={stakingState} stakingDispatch={stakingDispatch} />}
+		</div>
+	)
+
+	const ipadVaultDetails = (
+		<div className={classNames.stacksContainer}>
+			<div className={classNames.mainCardStack}>
+				<Header stakingState={stakingState} stakingDispatch={stakingDispatch} />
+			</div>
+			<Details stakingState={stakingState} />
+		</div>
+	)
+
+	const ipadLayout = (
+		<div className={classNames.container}>
+			{stakingState.selectedVault ? ipadVaultDetails : <StakingOpportunitiesCard stakingState={stakingState} stakingDispatch={stakingDispatch} />}
+			{stakingState.selectedVault ? <Chart selectedVault={stakingState.selectedVault} /> : null}
+		</div>
+	)
+
+	const vaultDetails = useMemo(() => {
+		if (!stakingState.selectedVault) return null
+		return (
+			<div className={classNames.stacksContainer}>
+				<div className={classNames.mainCardStack}>
+					<Header stakingState={stakingState} stakingDispatch={stakingDispatch} />
+					<Chart selectedVault={stakingState.selectedVault} />
+				</div>
+				<Details stakingState={stakingState} />
+			</div>
+		)
+	}, [stakingState.selectedVault, stakingState.address])
+
+	const desktopLayout = (
+		<div className={classNames.container}>
+			<StakingOpportunitiesCard stakingState={stakingState} stakingDispatch={stakingDispatch} />
+			{vaultDetails}
+		</div>
+	)
+
+	return <div style={{ width: '100%', height: '100%' }}>{isMobile ? mobileLayout : isIpad ? ipadLayout : desktopLayout}</div>
 }

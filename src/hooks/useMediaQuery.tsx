@@ -1,29 +1,32 @@
 import { useEffect, useState } from 'react'
 
 const sizes = {
-  mobile: '768px',
+	mobile: '768px',
+	ipad: '1024px',
 }
 
-export const useMediaQuery = (screen: 'mobile') => {
-  const [matches, setMatches] = useState(() => {
-    const query = `(min-width: ${sizes[screen]})`
-    return window.matchMedia(query).matches
-  })
+type Screen = 'ipad' | 'mobile'
 
-  useEffect(() => {
-    const query = `(min-width: ${sizes[screen]})`
-    const media = window.matchMedia(query)
+export const useMediaQuery = (screen: Screen) => {
+	const [matches, setMatches] = useState(() => {
+		const query = `(max-width: ${sizes[screen]})`
+		return window.matchMedia(query).matches
+	})
 
-    const listener = (event: MediaQueryListEvent) => {
-      setMatches(event.matches)
-    }
+	useEffect(() => {
+		const query = `(max-width: ${sizes[screen]})`
+		const media = window.matchMedia(query)
 
-    media.addEventListener('change', listener)
+		const listener = (event: MediaQueryListEvent) => {
+			setMatches(event.matches)
+		}
 
-    return () => {
-      media.removeEventListener('change', listener)
-    }
-  }, [screen])
+		media.addEventListener('change', listener)
 
-  return matches
+		return () => {
+			media.removeEventListener('change', listener)
+		}
+	}, [screen])
+
+	return matches
 }

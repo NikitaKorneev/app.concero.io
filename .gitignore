@@ -4,6 +4,8 @@
 /.pnp
 .pnp.js
 
+pnpm-lock.yaml
+
 # testing
 /coverage
 
@@ -71,3 +73,5 @@ dist-ssr
 
 .stylelintcache
 .env
+
+*.lockb

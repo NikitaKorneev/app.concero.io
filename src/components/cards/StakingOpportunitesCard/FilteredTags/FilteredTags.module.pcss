@@ -1,23 +1,17 @@
 .container {
-    padding: var(--sp-md) 0;
-    flex-direction: row;
-    gap: var(--sp-xs);
-    flex-wrap: wrap;
+	flex-direction: row;
+	gap: var(--sp-xs);
+	flex-wrap: wrap;
 
-    .tagText {
-        color: var(--color-base-white);
-    }
+	.tagText {
+		color: var(--color-base-white);
+	}
 }
 
-.selectItemContainer {
-    width: 100%;
-    justify-content: space-between;
-    align-items: center;
-    flex-direction: row;
-
-    .infoContainer {
-        gap: var(--sp-sm);
-        flex-direction: row;
-        align-items: center;
-    }
+@media (max-width: 768px) {
+	.container {
+		width: 100%;
+		flex-wrap: unset;
+		overflow-x: scroll;
+	}
 }

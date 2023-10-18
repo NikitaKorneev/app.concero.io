@@ -1,77 +1,36 @@
-import { FC, ReactNode, useContext } from 'react'
+import { FC } from 'react'
+import { IconArrowDownRight, IconArrowUpRight } from '@tabler/icons-react'
 import classNames from './Highlight.module.pcss'
 import { Tag } from '../Tag/Tag'
-import { ThemeContext } from '../../../hooks/themeContext'
 
 interface HighlightProps {
-  size: 'sm' | 'md' | 'lg'
-  item: {
-    title: string
-    value: string
-    valueSecondary?: string | undefined
-    last_24h: string
-  }
+	size: 'sm' | 'md' | 'lg'
+	title: string
+	value: string
+	valueSecondary?: string | undefined
+	tag: string
 }
 
-const getHighlightClasses = (size: HighlightProps['size']) => {
-  const baseClasses = [classNames.container]
-  const sizeClass = size ? classNames[size] : ''
-  return baseClasses.concat(sizeClass).join(' ')
-}
+export const Highlight: FC<HighlightProps> = ({ title, value, valueSecondary, tag, size = 'md' }) => {
 
-/**
- A customizable Highlight component
- @param {string} title - The title displayed above the value.
- @param {string} value - The main value displayed in large text.
- @param {string} [size='md'] - The size of the value text. Can be one of 'sm', 'md', or 'lg'.
- @param {string} [valueSecondary] - A secondary value displayed below the main value.
- @param {ReactNode} [children] - The children of the component.
- @returns {JSX.Element} - The rendered Highlight element.
- @example
- <Highlight size={'lg'} title="Balance" value="1000 USD">
- <button>Refresh</button>
- </Highlight>
- */
-export const Highlight: FC<HighlightProps> = ({ item: { title, value, valueSecondary, last_24h }, size = 'md' }) => {
-  const { colors } = useContext(ThemeContext)
-  const highlightClasses = getHighlightClasses(size)
-
-  const textColor = last_24h.split('')[0] === '-' ? colors.red.dark : colors.green.dark
-  const tagColor = last_24h.split('')[0] === '-' ? 'red' : 'green'
-  const tagArrow = last_24h.split('')[0] === '-' ? 'ArrowDownRight' : 'ArrowUpRight'
-
-  return (
-    <div className={highlightClasses}>
-      <div className={classNames.topRow}>
-        {title ? <h5 className={'cardHeaderTitle'}>{title}</h5> : null}
-        {valueSecondary ? (
-          <Tag
-            color={tagColor}
-            leftIcon={{
-              name: tagArrow,
-              iconProps: { size: 18 },
-            }}
-            size={size}
-            title={`${last_24h}%`}
-          />
-        ) : null}
-      </div>
-      <div className={classNames.bottomRow}>
-        <h2>{value}</h2>
-        {valueSecondary ? (
-          <div className={classNames.secondary}>{valueSecondary}</div>
-        ) : (
-          <Tag
-            color={tagColor}
-            leftIcon={{
-              name: tagArrow,
-              iconProps: { size: 18 },
-            }}
-            size={size}
-            title={`${last_24h}%`}
-          />
-        )}
-      </div>
-    </div>
-  )
+	const tagColor = tag?.split('')[0] === '-' ? 'red' : 'green'
+	const tagArrow = tag?.split('')[0] === '-' ? <IconArrowDownRight size={18} /> : <IconArrowUpRight size={18} />
+	return (
+		<div className={`card ${classNames.container}`}>
+			<div className={classNames.topRow}>
+				{title ? <h5 className="cardHeaderTitle">{title}</h5> : null}
+				{valueSecondary ? <Tag color={tagColor} leftIcon={tagArrow} size={size} title={`${tag}%`} /> : null}
+			</div>
+			<div className={classNames.bottomRow}>
+				<h2>{value}</h2>
+				{valueSecondary ? (
+					<div className={classNames.secondary}>{valueSecondary}</div>
+				) : tag ? (
+					<div className={classNames.tag}>
+						<Tag color={tagColor} leftIcon={tagArrow} size={size} title={`${tag}%`} />
+					</div>
+				) : null}
+			</div>
+		</div>
+	)
 }

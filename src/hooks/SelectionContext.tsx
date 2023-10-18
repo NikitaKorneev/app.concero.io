@@ -1,113 +1,88 @@
-import { createContext, ReactNode, useReducer } from 'react'
-import { tokens } from '../constants/tokens'
-import { chains } from '../constants/chains'
-
-export const SelectionContext = createContext(null)
-
-type SelectedTokens = {
-  from: {
-    chain: {
-      id: number
-      name: string
-      symbol: string
-      logoURI: string
-    }
-    token: {
-      name: string
-      symbol: string
-      address: string
-      logoURI: string
-    }
-  }
-  to: {
-    chain: {
-      id: number
-      name: string
-      symbol: string
-      logoURI: string
-    }
-    token: {
-      name: string
-      symbol: string
-      address: string
-      logoURI: string
-    }
-  }
-}
-
-interface SelectionState {
-  swapCard: SelectedTokens
-  historyCard: SelectedTokens
-  newsCard: SelectedTokens
-}
+import { createContext, ReactNode, useContext, useReducer } from 'react'
+import { DataContext } from './DataContext/DataContext'
 
 interface SelectionProviderProps {
-  children: ReactNode
+	children: ReactNode
+	setIsLoading: (isLoading: boolean) => void
 }
 
 const reducer = (state, action) => {
-  switch (action.type) {
-    case 'SET_HISTORY_CARD':
-      return {
-        ...state,
-        historyCard: action.payload,
-      }
-    case 'SET_SWAP_CARD':
-      return {
-        ...state,
-        swapCard: action.payload,
-      }
-    default:
-      return state
-  }
+	switch (action.type) {
+		case 'SET_HISTORY_CARD':
+			return {
+				...state,
+				historyCard: action.payload,
+			}
+		case 'SET_SWAP_CARD':
+			return {
+				...state,
+				swapCard: action.payload,
+			}
+		case 'SET_SELECTION':
+			return {
+				...state,
+				...action.payload,
+			}
+		default:
+			return state
+	}
 }
 
-const selectedTokens: SelectedTokens = {
-  from: {
-    chain: {
-      id: 1,
-      name: chains[0].name,
-      symbol: chains[0].symbol,
-      logoURI: chains[0].logoURI,
-    },
-    token: {
-      symbol: tokens['1'][0].symbol,
-      address: tokens['1'][0].address,
-      logoURI: tokens['1'][0].logoURI,
-    },
-  },
-  to: {
-    chain: {
-      id: 137,
-      name: chains[1].name,
-      symbol: chains[1].symbol,
-      logoURI: chains[1].logoURI,
-    },
-    token: {
-      symbol: tokens['137'][0].symbol,
-      address: tokens['137'][0].address,
-      logoURI: tokens['137'][0].logoURI,
-    },
-  },
-}
+const selectedTokens = ({ fromTokens, toTokens, chains }) => ({
+	from: {
+		chain: {
+			id: chains[0].id,
+			name: chains[0].name,
+			symbol: chains[0].symbol,
+			logoURI: chains[0].logoURI,
+			providers: chains[0].providers,
+		},
+		token: {
+			symbol: fromTokens[0].symbol,
+			address: fromTokens[0].address,
+			decimals: fromTokens[0].decimals,
+			logoURI: fromTokens[0].logoURI,
+			coinGeckoId: fromTokens[0].coinGeckoId,
+		},
+	},
+	to: {
+		chain: {
+			id: chains[1].id,
+			name: chains[1].name,
+			symbol: chains[1].symbol,
+			logoURI: chains[1].logoURI,
+			providers: chains[1].providers,
+		},
+		token: {
+			symbol: toTokens[0].symbol,
+			address: toTokens[0].address,
+			decimals: toTokens[0].decimals,
+			logoURI: toTokens[0].logoURI,
+			coinGeckoId: toTokens[0].coinGeckoId,
+		},
+	},
+})
 
-const initArgs: SelectionState = {
-  swapCard: selectedTokens,
-  historyCard: selectedTokens,
-  newsCard: selectedTokens,
-}
+const initArgs = ({ fromTokens, toTokens, chains }) => ({
+	swapCard: selectedTokens({ fromTokens, toTokens, chains }),
+	historyCard: selectedTokens({ fromTokens, toTokens, chains }),
+	newsCard: selectedTokens({ fromTokens, toTokens, chains }),
+})
+
+export const SelectionContext = createContext(null)
 
 export function SelectionProvider({ children }: SelectionProviderProps) {
-  const [selection, dispatch] = useReducer(reducer, initArgs)
+	const { tokens, chains, getTokens, getChains } = useContext(DataContext)
+	const [selection, dispatch] = useReducer(reducer, initArgs({ fromTokens: tokens['1'], toTokens: tokens['137'], chains }))
 
-  return (
-    <SelectionContext.Provider
-      value={{
-        selection,
-        dispatch,
-      }}
-    >
-      {children}
-    </SelectionContext.Provider>
-  )
+	return (
+		<SelectionContext.Provider
+			value={{
+				selection,
+				dispatch,
+			}}
+		>
+			{children}
+		</SelectionContext.Provider>
+	)
 }

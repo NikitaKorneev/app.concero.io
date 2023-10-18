@@ -1,20 +1,10 @@
+import { IconSettings } from '@tabler/icons-react'
 import { Button } from '../../../buttons/Button/Button'
-import { colors } from '../../../../constants/colors'
 
 export function TooltipContent() {
-  return (
-    <Button
-      variant="subtle"
-      size="lg"
-      leftIcon={{
-        name: 'Settings',
-        iconProps: {
-          color: colors.text.secondary,
-          size: 18,
-        },
-      }}
-    >
-      Coming Soon
-    </Button>
-  )
+	return (
+		<Button variant="subtle" size="lg" leftIcon={<IconSettings size={18} color={'var(--color-text-secondary)'} />}>
+			Coming Soon
+		</Button>
+	)
 }
