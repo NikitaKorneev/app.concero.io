@@ -1,25 +1,32 @@
-import { FC } from 'react'
 import classNames from './PortfolioScreen.module.pcss'
 import { HistoryCard } from '../../cards/HistoryCard/HistoryCard'
 import { ChartCard } from '../../cards/ChartCard/ChartCard'
 import { HighlightsCard } from '../../cards/HighlightsCard/HighlightsCard'
 import { BarChartCard } from '../../cards/BarChartCard/BarChartCard'
 import { HoldingsCard } from '../../cards/HoldingsCard/HoldingsCard'
+import { usePortfolioReducer } from './usePortfolioReducer/usePortfolioReducer'
+import { useEffect } from 'react'
 
-export interface PortfolioScreenProps {}
+export function PortfolioScreen() {
+	const [portfolioState, portfolioDispatch] = usePortfolioReducer()
 
-export const PortfolioScreen: FC<PortfolioScreenProps> = () => (
-	<div className={`row ${classNames.container}`}>
-		<div className={classNames.mainCardStack}>
-			<div className={classNames.horizontalCardStack}>
-				<HighlightsCard />
-				<BarChartCard />
+	useEffect(() => {
+		// populateBalances(portfolioDispatch)
+	}, [])
+
+	return (
+		<div className={`row ${classNames.container}`}>
+			<div className={classNames.mainCardStack}>
+				<div className={classNames.horizontalCardStack}>
+					<HighlightsCard />
+					<BarChartCard />
+				</div>
+				<ChartCard />
 			</div>
-			<ChartCard />
+			<div className={classNames.secondaryCardStack}>
+				<HoldingsCard />
+				<HistoryCard />
+			</div>
 		</div>
-		<div className={classNames.secondaryCardStack}>
-			<HoldingsCard />
-			<HistoryCard />
-		</div>
-	</div>
-)
+	)
+}
