@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react'
 import { SwapButton } from '../../components/buttons/SwapButton/SwapButton'
-import jest from 'jest-mock'
+import { vi } from 'vitest'
 import { buttonText, ButtonType } from '../../components/buttons/SwapButton/constants'
 
 describe('SwapButton component', () => {
@@ -12,15 +12,15 @@ describe('SwapButton component', () => {
 			},
 		},
 		isConnected: true,
-		onClick: jest.fn(),
+		onClick: vi.fn(),
 	}
 
-	test('renders SwapButton correctly', () => {
+	test('renders SwapButton', () => {
 		const { getByText } = render(<SwapButton {...mockProps} />)
 		expect(getByText(buttonText[ButtonType.ENTER_AMOUNT])).toBeInTheDocument()
 	})
 
-	test('triggers onClick function when button is clicked', () => {
+	test('triggers onClick', () => {
 		const { getByText } = render(<SwapButton {...mockProps} />)
 		const button = getByText(buttonText[ButtonType.ENTER_AMOUNT])
 		fireEvent.click(button)

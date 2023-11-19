@@ -1,9 +1,8 @@
 import { useWeb3Modal } from '@web3modal/react'
-import { FC, useContext } from 'react'
+import { FC } from 'react'
 import { WithPopover } from '../../../wrappers/WithPopover'
 import { HeaderPopoverMenu } from '../HeaderPopoverMenu/HeaderPopoverMenu'
 import { useMediaQuery } from '../../../../hooks/useMediaQuery'
-import { ThemeContext } from '../../../../hooks/themeContext'
 import { BaseButton } from './BaseButton/BaseButton'
 import { useTracking } from '../../../../hooks/useTracking'
 import { action, category } from '../../../../constants/tracking'
@@ -13,7 +12,6 @@ interface WalletButtonProps {}
 
 export const WalletButton: FC<WalletButtonProps> = () => {
 	const isMobile = useMediaQuery('mobile')
-	const { toggleTheme } = useContext(ThemeContext)
 	const { open } = useWeb3Modal()
 	const { trackEvent } = useTracking()
 	const { isConnected } = useAccount()

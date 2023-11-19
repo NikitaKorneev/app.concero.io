@@ -1,15 +1,14 @@
+import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { ListModal } from '../../components/modals/ListModal/ListModal'
-import jest from 'jest-mock'
 
-const mockGetItems = jest.fn().mockResolvedValue([])
+const mockGetItems = vi.fn().mockResolvedValue([])
 
-describe('ListModal Component', () => {
+describe('renders ListModal', () => {
 	it('renders ListModal component correctly', () => {
 		const { getByText, getByPlaceholderText } = render(
 			<ListModal getItems={mockGetItems} isOpen={true} setIsOpen={() => {}} title="Test Modal" RenderItem={() => <div>Mock Item</div>} />,
 		)
-
 		expect(getByText('Test Modal')).toBeInTheDocument()
 		expect(getByPlaceholderText('Search...')).toBeInTheDocument()
 	})
@@ -20,7 +19,6 @@ describe('ListModal Component', () => {
 		)
 
 		const searchInput = getByPlaceholderText('Search...')
-
 		fireEvent.change(searchInput, { target: { value: 'test search' } })
 
 		await waitFor(() => {
