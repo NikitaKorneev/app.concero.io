@@ -25,6 +25,7 @@ export const Header: FC<HeaderProps> = ({ children }) => {
 	const isMobile = useMediaQuery('mobile')
 	const matchExchange = useMatch(routes.swap)
 	const matchStaking = useMatch(routes.earn)
+	const matchPortfolio = useMatch(routes.portfolio)
 	const { t } = useTranslation()
 
 	const handleHelpButtonClick = () => {
@@ -51,6 +52,9 @@ export const Header: FC<HeaderProps> = ({ children }) => {
 						</Link>
 						<Link className={matchStaking ? classNames.active : classNames.link} to={routes.earn}>
 							{t('header.staking')}
+						</Link>
+						<Link className={matchPortfolio ? classNames.active : classNames.link} to={routes.portfolio}>
+							{t('header.portfolio')}
 						</Link>
 						{ComingSoon}
 					</ul>
