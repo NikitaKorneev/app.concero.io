@@ -1,5 +1,5 @@
 import { Dispatch } from 'react'
-import { ManageAction, ManageState } from '../useManageReducer/types'
+import { ManageAction, ManageState } from '../useStakingReducer/types'
 import { ModalType, Status } from '../constants'
 import { getSigner } from '../../../../../web3/getSigner'
 import { SwitchNetworkArgs, SwitchNetworkResult } from '@wagmi/core'
@@ -29,7 +29,6 @@ export async function handleExecuteSwap(manageState: ManageState, manageDispatch
 			manageDispatch({ type: 'PUSH_STEP', step: { title: 'Action required', status: 'await', body: 'Please approve the transaction in your wallet' } })
 			await approveToken({ signer, tokenAddress: from.token.address, receiverAddress: approvalTx.spender, fromAmount: approvalTx.amount })
 		}
-
 		manageDispatch({ type: 'PUSH_STEP', step: { title: 'Fetching transaction data', status: 'pending' } })
 		const route = await retryRequest(
 			async () =>
@@ -45,9 +44,8 @@ export async function handleExecuteSwap(manageState: ManageState, manageDispatch
 
 		const transactionArgs = {
 			...route.tx,
-			gasLimit: BigNumber(manageState.route.gas).times(1.8).toFixed(0).toString(),
+			gasLimit: BigNumber(manageState.route.gas._hex).times(1.8).toFixed(0).toString(),
 		}
-
 		manageDispatch({ type: 'PUSH_STEP', step: { title: 'Action required', status: 'await', body: 'Please approve the transaction in your wallet' } })
 		await signer.sendTransaction(transactionArgs)
 
@@ -55,7 +53,7 @@ export async function handleExecuteSwap(manageState: ManageState, manageDispatch
 		manageDispatch({ type: 'SET_MODAL_TYPE', payload: ModalType.success })
 		manageDispatch({ type: 'PUSH_STEP', step: { title: 'Swap started successfully!', status: 'success' } })
 	} catch (error) {
-		console.log(error)
+		console.error(error)
 		handleError(error as Error, manageDispatch)
 	} finally {
 		manageDispatch({ type: 'SET_LOADING', payload: false })

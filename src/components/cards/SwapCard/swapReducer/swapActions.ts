@@ -1,9 +1,12 @@
 import { toggleRouteInsurance } from './toggleRouteInsurance'
 import { handleBeforeUnload } from '../../../../utils/leavingPageEvents'
+import { SwapAction, SwapState } from './types'
+// import { StageStep } from '../../StakingHeaderCard/ManageModal/SwapProgress/TransactionStep'
+import { trackEvent } from '../../../../hooks/useTracking'
+import { action as trackingAction, category as trackingCategory } from '../../../../constants/tracking'
 
-export const swapActions = {
+export const swapActions: SwapAction = {
 	/* ROUTE-RELATED ACTIONS */
-	SET_ROUTES: (state, action) => ({ ...state, routes: action.payload }),
 	POPULATE_ROUTES: (state, action) => {
 		if (action.fromAmount !== state.from.amount) return state
 		return { ...state, routes: action.payload, selectedRoute: action.payload[0] }
@@ -12,8 +15,6 @@ export const swapActions = {
 	SET_BALANCE: (state, action) => ({ ...state, balance: action.payload }),
 	SET_LOADING: (state, action) => ({ ...state, isLoading: action.payload }),
 	SET_SELECTED_ROUTE: (state, action) => ({ ...state, selectedRoute: action.payload }),
-	SET_ORIGINAL_ROUTES: (state, action) => ({ ...state, originalRoutes: action.payload }),
-	SET_TYPING_TIMEOUT: (state, action) => ({ ...state, typingTimeout: action.payload }),
 	/* INPUT_RELATED ACTIONS */
 	SET_CHAIN: (state, action) => {
 		const { chain } = action.payload
@@ -39,8 +40,11 @@ export const swapActions = {
 		...state,
 		[action.direction]: { ...state[action.direction], address: action.payload },
 	}),
-	SET_RESPONSE: (state, action) => ({ ...state, response: action.payload }),
-	TOGGLE_INSURANCE: (state, action) => toggleRouteInsurance(state, action.payload),
+	// SET_RESPONSE: (state, action: SwapAction) => ({ ...state, response: action.payload }),
+	TOGGLE_INSURANCE: (state, action) => {
+		trackEvent({ category: trackingCategory.SwapCard, action: trackingAction.ToggleInsurance, label: 'toggle_insurance' })
+		return toggleRouteInsurance(state, action.payload)
+	},
 	SET_SWAP_STAGE: (state, action) => {
 		if (action.payload === 'progress') {
 			window.addEventListener('beforeunload', handleBeforeUnload)
@@ -49,15 +53,16 @@ export const swapActions = {
 		}
 		return { ...state, stage: action.payload }
 	},
-	TOGGLE_SETTINGS_MODAL_OPEN: state => ({ ...state, settingsModalOpen: !state.settingsModalOpen }),
-	SET_SETTINGS: (state, action) => ({ ...state, settings: { ...state.settings, ...action.payload } }),
-	SET_SWAP_STEPS: (state, action) => ({ ...state, steps: action.payload }),
-	SET_SWAP_STATUS: (state, action) => {
-		if (action.payload === 'success' || action.payload === 'failure') {
-			window.removeEventListener('beforeunload', handleBeforeUnload)
-		}
-		return { ...state, status: action.payload }
+	TOGGLE_SETTINGS_MODAL_OPEN: state => {
+		trackEvent({ category: trackingCategory.SwapCard, action: trackingAction.ToggleSettingsModal, label: 'toggle_settings_modal_open', data: { isOpen: !state.settingsModalOpen } })
+		return { ...state, settingsModalOpen: !state.settingsModalOpen }
 	},
+	SET_SETTINGS: (state, action) => {
+		trackEvent({ category: trackingCategory.SwapCard, action: trackingAction.ToggleSettingsModal, label: 'set_settings', data: state.settings })
+		return { ...state, settings: { ...state.settings, ...action.payload } }
+	},
+
+	SET_SWAP_STEPS: (state, action) => ({ ...state, steps: action.payload }),
 	APPEND_SWAP_STEP: (state, action) => ({ ...state, steps: [...state.steps, action.payload] }),
 	SET_TO_ADDRESS: (state, action) => ({ ...state, to: { ...state.to, address: action.payload } }),
 	UPSERT_SWAP_STEP: (state, action) => {
@@ -70,6 +75,31 @@ export const swapActions = {
 		newSteps[index] = { ...newSteps[index], ...rest }
 		return { ...state, steps: newSteps }
 	},
-	SET_CHAINS: (state, action) => ({ ...state, chains: action.payload }),
-	POPULATE_INIT_DATA: (state, action) => action.payload,
+	UPDATE_LAST_SWAP_STEP: updateLastSwapState,
+	// UPDATE_PREV_RANGO_STEPS: (state: SwapState, action: SwapAction): SwapState => {
+	// 	if (!state.steps.length) return state
+	// 	if (action.currentTransactionStatus === 'failed') {
+	// 		return updateLastSwapState(state)
+	// 	} else {
+	// 		const newStatuses = state.steps.map((step: StageStep): StageStep => {
+	// 			if (step.title === 'Bridging transaction') {
+	// 				return { ...step, status: 'success' }
+	// 			} else if (step.title === 'Action required') {
+	// 				return { ...step, status: 'success', title: 'Transaction approved', body: 'Your transaction has been successfully approved.' }
+	// 			}
+	// 			return step
+	// 		})
+	// 		return { ...state, steps: newStatuses }
+	// 	}
+	// },
+	SET_WALLET_BALANCES: (state: SwapState, action: SwapAction) => ({ ...state, walletBalances: action.balances }),
+	SET_IS_NO_ROUTES: (state: SwapState, action: SwapAction) => ({ ...state, isNoRoutes: action.status }),
+}
+
+function updateLastSwapState(state: SwapState): SwapState {
+	const lastStep = state.steps[state.steps.length - 1]
+	if (lastStep?.status === 'pending' || lastStep?.status === 'await') {
+		return { ...state, steps: [...state.steps.slice(0, state.steps.length - 1)] }
+	}
+	return state
 }

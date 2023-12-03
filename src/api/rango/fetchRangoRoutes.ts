@@ -1,17 +1,23 @@
 import { rangoClient } from './rangoClient'
-import { addingAmountDecimals } from '../../utils/formatting'
-import { standardizeRangoRoutes } from './standardizeRangoRoutes'
 import { config } from '../../constants/config'
+import { standardizeRangoBestRoute } from './standardizeRangoBestRoute'
+import { Direction, StandardRoute } from '../../types/StandardRoute'
+import { Settings } from '../../components/cards/SwapCard/swapReducer/types'
+import { BestRouteRequest } from 'rango-sdk/src/types'
 
-export const fetchRangoRoutes = async ({ from, to, settings }) => {
-	// todo: how to control rango slippage?
+interface IFetchRangoRoutes {
+	from: Direction
+	to: Direction
+	settings: Settings
+}
 
+export const fetchRangoRoutes = async ({ from, to, settings }: IFetchRangoRoutes): Promise<[StandardRoute] | []> => {
 	const fromRangoChainSymbol = from.chain.providers?.find(item => item.name === 'rango')?.symbol
 	const toRangoChainSymbol = to.chain.providers?.find(item => item.name === 'rango')?.symbol
 
 	if (fromRangoChainSymbol === undefined || toRangoChainSymbol === undefined) return []
 
-	const routesRequest = {
+	const quoteParams: BestRouteRequest = {
 		from: {
 			blockchain: fromRangoChainSymbol,
 			symbol: from.token.symbol,
@@ -22,15 +28,17 @@ export const fetchRangoRoutes = async ({ from, to, settings }) => {
 			symbol: to.token.symbol,
 			address: to.token.address === config.NULL_ADDRESS ? null : to.token.address,
 		},
+		amount: from.amount as string,
+		checkPrerequisites: true,
+		connectedWallets: [],
+		selectedWallets: { [fromRangoChainSymbol]: from.address as string, [toRangoChainSymbol]: from.address as string },
+		affiliateRef: process.env.RANGO_AFFILIATE_REF,
+		affiliatePercent: Number(process.env.RANGO_AFFILIATE_PERCENTAGE),
 		slippage: settings.slippage_percent,
-		amount: addingAmountDecimals(Number(from.amount), from.token.decimals),
-		// slippage: '0.1',
-		// slippage_percent: '0.1',
-		// slippage_limit: '0.1',
 	}
 
-	const quote = await rangoClient.quote(routesRequest)
-	if (quote.route === null) return []
-	console.log('quote', quote)
-	return [standardizeRangoRoutes(quote)]
+	const route = await rangoClient.getBestRoute(quoteParams)
+	if (!route || !route.result) return []
+
+	return [await standardizeRangoBestRoute(route, from, to)]
 }

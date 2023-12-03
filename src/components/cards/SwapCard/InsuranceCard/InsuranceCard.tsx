@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { animated, useSpring } from '@react-spring/web'
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react'
-import { ToggleButton } from '../../../layout/ToggleButton/ToggleButton'
 import classNames from './InsuranceCard.module.pcss'
 import { Button } from '../../../buttons/Button/Button'
+import { Toggle } from '../../../layout/Toggle/Toggle'
+import { useTranslation } from 'react-i18next'
 
 export function InsuranceCard({ swapState, swapDispatch }) {
 	const [isInfoVisible, setIsInfoVisible] = useState(false)
 	const [springProps, setSpringProps] = useSpring(() => ({ height: 'auto' }))
 	const infoContainerRef = useRef(null)
+	const { t } = useTranslation()
 
 	const isChecked = swapState.selectedRoute.insurance.state === 'INSURED'
 
@@ -30,8 +32,8 @@ export function InsuranceCard({ swapState, swapDispatch }) {
 		<div className={`card ${classNames.container} ${isChecked ? classNames.checked : classNames.unchecked}`}>
 			<div className={classNames.innerContainer}>
 				<div className={classNames.sideContainer}>
-					<ToggleButton value={isChecked} onChange={handleClickInsuranceButton} />
-					<h5>Insurance</h5>
+					<Toggle isChecked={isChecked} onChange={handleClickInsuranceButton} />
+					<h5>{t('swapCard.insurance')}</h5>
 				</div>
 				<div className={classNames.sideContainer}>
 					<h4>${swapState.selectedRoute.insurance.fee_amount_usd}</h4>

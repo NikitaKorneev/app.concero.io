@@ -2,14 +2,16 @@ import { useContext } from 'react'
 import { IconArrowWaveRightUp, IconClock, IconPigMoney } from '@tabler/icons-react'
 import { Tag } from '../../tags/Tag/Tag'
 import classNames from './RouteCard.module.pcss'
-import { Route } from '../../../api/lifi/types'
+import { StandardRoute } from '../../../types/StandardRoute'
 import { capitalize, numberToFormatString, secondsConverter } from '../../../utils/formatting'
 import { Beacon } from '../../layout/Beacon/Beacon'
 import { InsuranceContext } from '../SwapCard/InsuranceContext'
+import { useTranslation } from 'react-i18next'
 
-export const renderTags = (route: Route, isSelected: boolean, getTextColor: () => string, getIconColor: () => string) => {
+export const renderTags = (route: StandardRoute, isSelected: boolean, getTextColor: () => string, getIconColor: () => string) => {
 	const advantageTagText = route?.tags[0]?.toLowerCase() === 'recommended' ? 'best' : route?.tags[0]?.toLowerCase()
 	const { toggleInsurance } = useContext(InsuranceContext)
+	const { t } = useTranslation()
 
 	const handleInsuranceButtonClick = event => {
 		event.stopPropagation()
@@ -25,13 +27,15 @@ export const renderTags = (route: Route, isSelected: boolean, getTextColor: () =
 			) : null}
 			{route.insurance ? (
 				<Tag color="green" onClick={e => handleInsuranceButtonClick(e)}>
-					<p style={{ color: 'inherit', flexWrap: 'nowrap' }}>Insurance</p>
+					<p style={{ color: 'inherit', flexWrap: 'nowrap' }}>{t('swapCard.insurance')}</p>
 					<Beacon isOn={route.insurance?.state === 'INSURED'} color="green" />
 				</Tag>
 			) : null}
-			<Tag color="transparent" leftIcon={<IconClock size={20} color={getIconColor()} />}>
-				<h5 className={`${classNames.bodyColor} ${getTextColor()}`}>{secondsConverter(route.transaction_time_seconds)}</h5>
-			</Tag>
+			{route.transaction_time_seconds ? (
+				<Tag color="transparent" leftIcon={<IconClock size={20} color={getIconColor()} />}>
+					<h5 className={`${classNames.bodyColor} ${getTextColor()}`}>{secondsConverter(route.transaction_time_seconds)}</h5>
+				</Tag>
+			) : null}
 			{route.slippage_percent ? (
 				<Tag color="transparent" leftIcon={<IconArrowWaveRightUp size={20} color={getIconColor()} />}>
 					<h5 className={`${classNames.bodyColor} ${getTextColor()}`}>{numberToFormatString(route.slippage_percent)}%</h5>

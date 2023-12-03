@@ -3,7 +3,7 @@ import { Modal } from '../../../modals/Modal/Modal'
 import { StakingState } from '../../../screens/StakingScreen/stakingReducer/types'
 import classNames from './ManageModal.module.pcss'
 import { SelectArea } from './SelectArea/SelectArea'
-import { useManageReducer } from './useManageReducer/useManageReducer'
+import { useStakingReducer } from './useStakingReducer/useStakingReducer'
 import { ModalType, SwapType } from './constants'
 import { InnerSelectModal } from './InnerSelectModal/InnerSelectModal'
 import { ListEntityButton } from '../../../buttons/ListEntityButton/ListEntityButton'
@@ -14,8 +14,10 @@ import { StakeButton } from '../StakeButton/StakeButton'
 import { getQuote } from './getQuote'
 import { getBalance } from '../../../../utils/getBalance'
 import { DataContextValue } from '../../../../hooks/DataContext/types'
-import { SwapProgress } from '../../../layout/SwapProgress/SwapProgress'
+
 import { clearRoute } from './clearRoute'
+import { StakingSwapProgress } from './StakingSwapProgress/StakingSwapProgress'
+import { useTranslation } from 'react-i18next'
 
 interface ManageModalProps {
 	isOpen: boolean
@@ -25,9 +27,10 @@ interface ManageModalProps {
 
 export function ManageModal({ isOpen, setIsOpen, stakingState }: ManageModalProps) {
 	const { getChains, getTokens } = useContext<DataContextValue>(DataContext)
-	const [manageState, manageDispatch] = useManageReducer(stakingState)
+	const [manageState, manageDispatch] = useStakingReducer(stakingState)
 	const { modalType, swapType } = manageState
 	const typingTimeoutRef = useRef(null)
+	const { t } = useTranslation()
 
 	async function handleSelectChain(item: any): Promise<void> {
 		const direction = swapType === SwapType.stake ? 'from' : 'to'
@@ -43,6 +46,10 @@ export function ManageModal({ isOpen, setIsOpen, stakingState }: ManageModalProp
 	}
 
 	function handleOnClose(): void {
+		if (manageState.modalType === ModalType.progress) {
+			window.alert('Please wait for the transaction to complete')
+			return
+		}
 		setIsOpen(false)
 	}
 
@@ -86,16 +93,16 @@ export function ManageModal({ isOpen, setIsOpen, stakingState }: ManageModalProp
 	}, [stakingState.selectedVault?.address])
 
 	return (
-		<Modal title="Manage position" show={isOpen} setShow={handleOnClose}>
+		<Modal title={t('manageModal.title')} show={isOpen} setShow={handleOnClose}>
 			<div className={classNames.container}>
 				{modalType === ModalType.input ? (
 					<div className={classNames.areaContainer}>
 						<div className={classNames.row}>
 							<Button size="sm" variant={swapType === SwapType.stake ? 'primary' : 'subtle'} onClick={setStakeType}>
-								Stake
+								{t('button.stake')}
 							</Button>
 							<Button size="sm" variant={swapType === SwapType.withdraw ? 'primary' : 'subtle'} onClick={setWithdrawType} isDisabled={!stakingState.selectedVault?.stakedAmount}>
-								Withdraw
+								{t('button.withdraw')}
 							</Button>
 						</div>
 						<SelectArea selection={manageState.from} direction="from" dispatch={manageDispatch} swapType={swapType} balance={manageState.balance} />
@@ -108,7 +115,7 @@ export function ManageModal({ isOpen, setIsOpen, stakingState }: ManageModalProp
 				) : modalType === ModalType.tokens ? (
 					<InnerSelectModal RenderItem={ListEntityButton} getItems={getTokens} onSelect={handleSelectToken} chainId={manageState.from.chain.id} />
 				) : (
-					<SwapProgress swapState={manageState} handleGoBack={handleGoBack} />
+					<StakingSwapProgress manageState={manageState} handleGoBack={handleGoBack} />
 				)}
 			</div>
 		</Modal>

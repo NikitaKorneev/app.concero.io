@@ -3,7 +3,7 @@ import { animated, useSpring } from '@react-spring/web'
 import { IconChevronDown } from '@tabler/icons-react'
 import classNames from '../SwapCard.module.pcss'
 import { Button } from '../../../buttons/Button/Button'
-import { capitalize, numberToFormatString } from '../../../../utils/formatting'
+import { numberToFormatString } from '../../../../utils/formatting'
 import { CryptoSymbol } from '../../../tags/CryptoSymbol/CryptoSymbol'
 import { TextInput } from '../../../input/TextInput'
 import { TokenAreaProps } from './types'
@@ -14,11 +14,13 @@ import { getCurrentPriceToken } from './getCurrentPriceToken'
 import { DataContext } from '../../../../hooks/DataContext/DataContext'
 import { ListModal } from '../../../modals/ListModal/ListModal'
 import { ListEntityButton } from '../../../buttons/ListEntityButton/ListEntityButton'
+import { useTranslation } from 'react-i18next'
 
 export const TokenArea: FC<TokenAreaProps> = ({ direction, selection, swapDispatch, balance = null, chains }) => {
 	const { getTokens, getChains } = useContext(DataContext)
 	const [state, tokenAreaDispatch] = useTokenAreaReducer(direction, selection)
 	const inputRef = useRef()
+	const { t } = useTranslation()
 
 	const shakeProps = useSpring({
 		from: { transform: 'translateX(0)' },
@@ -37,6 +39,13 @@ export const TokenArea: FC<TokenAreaProps> = ({ direction, selection, swapDispat
 		const tokens = await getTokens({ chainId: chain.id, offset: 0, limit: 15 })
 		swapDispatch({ type: 'SET_CHAIN', direction, payload: { chain }, tokens })
 		tokenAreaDispatch({ type: 'SET_SHOW_CHAINS_MODAL', payload: false })
+	}
+
+	function handleMaxButtonClick() {
+		if (!balance) return
+		const clearBalance = balance.substring(0, balance.indexOf(' '))
+		if (!Number(clearBalance)) return
+		handleAmountChange({ value: clearBalance, state, dispatch: swapDispatch, direction: 'from' })
 	}
 
 	useEffect(() => {
@@ -61,7 +70,7 @@ export const TokenArea: FC<TokenAreaProps> = ({ direction, selection, swapDispat
 			>
 				<div className={classNames.tokenRow}>
 					<div className={classNames.tokenRowHeader}>
-						<p>{capitalize(direction)}</p>
+						<p>{t(`tokenArea.${direction}`)}</p>
 						<Button
 							onClick={() => tokenAreaDispatch({ type: 'SET_SHOW_CHAINS_MODAL', payload: true })}
 							size="sm"
@@ -71,7 +80,11 @@ export const TokenArea: FC<TokenAreaProps> = ({ direction, selection, swapDispat
 							<CryptoSymbol src={selection.chain.logoURI} symbol={selection.chain.name} />
 						</Button>
 					</div>
-					{balance !== null ? <p>{`Max: ${balance}`}</p> : null}
+					{balance !== null ? (
+						<Button variant={'subtle'} size={'sm'} onClick={handleMaxButtonClick}>
+							<p>{`Max: ${balance}`}</p>
+						</Button>
+					) : null}
 				</div>
 				<div className={classNames.tokenRow}>
 					<div>
@@ -107,7 +120,7 @@ export const TokenArea: FC<TokenAreaProps> = ({ direction, selection, swapDispat
 			{/*  onSelect={handleSelectChain} */}
 			{/* /> */}
 			<ListModal
-				title="Select token"
+				title={t('modal.selectToken')}
 				isOpen={state.showTokensModal}
 				setIsOpen={value => tokenAreaDispatch({ type: 'SET_SHOW_TOKENS_MODAL', payload: value })}
 				onSelect={token => handleSelectToken(token)}
@@ -115,7 +128,7 @@ export const TokenArea: FC<TokenAreaProps> = ({ direction, selection, swapDispat
 				RenderItem={ListEntityButton}
 			/>
 			<ListModal
-				title="Select chain"
+				title={t('modal.selectChain')}
 				isOpen={state.showChainsModal}
 				setIsOpen={value => tokenAreaDispatch({ type: 'SET_SHOW_CHAINS_MODAL', payload: value })}
 				onSelect={chain => handleSelectChain(chain)}

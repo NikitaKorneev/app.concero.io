@@ -1,4 +1,13 @@
-const getStepStatus = action => {
+import { SwapAction } from '../swapReducer/types'
+import { Dispatch } from 'react'
+import { StandardRoute } from '../../../../types/StandardRoute'
+import { Process } from '@lifi/types/dist/cjs/step'
+import { trackEvent } from '../../../../hooks/useTracking'
+import { action, category } from '../../../../constants/tracking'
+import { Simulate } from 'react-dom/test-utils'
+import error = Simulate.error
+
+const getStepStatus = (action: Process) => {
 	switch (action.status.toLowerCase()) {
 		case 'done':
 			return 'success'
@@ -11,23 +20,36 @@ const getStepStatus = action => {
 	}
 }
 
-const getActionTitle = action => {
-	if (action?.type === 'SWITCH_CHAIN') return action.status.toLowerCase() === 'action_required' ? 'Action Required' : 'Chain switched successfully'
+const getActionTitle = (action: Process) => {
+	if (action?.type === 'SWITCH_CHAIN') {
+		return action.status.toLowerCase() === 'action_required' ? 'Action Required' : 'Chain switched successfully'
+	}
 	if (action?.message) return action.message
 	if (action?.error?.message) return action.error.message
 	return 'Transaction in progress'
 }
 
-const getActionBody = action => {
-	if (action?.type === 'SWITCH_CHAIN' && action?.status.toLowerCase() === 'action_required') return 'Please approve the chain switch in your wallet'
-	return action.substatusMessage ?? null
+const getActionBody = (action: Process) => {
+	const { status, type, message, substatusMessage } = action
+	if (type === 'SWITCH_CHAIN' && status.toLowerCase() === 'action_required') {
+		return 'Please approve the chain switch in your wallet.'
+	}
+	if (message?.includes('An unexpected error occurred.') && (status === 'PENDING' || status === 'ACTION_REQUIRED')) {
+		return 'Swap in progress.'
+	}
+	return substatusMessage ?? null
 }
 
-export const updateLifiSteps = ({ swapDispatch, selectedRoute }) => {
+interface UpdateLifiSteps {
+	swapDispatch: Dispatch<SwapAction>
+	selectedRoute: StandardRoute
+}
+
+export const updateLifiSteps = ({ swapDispatch, selectedRoute }: UpdateLifiSteps) => {
 	const messages = selectedRoute.execution.reduce((acc, step) => {
 		if (!step?.process) return acc
 
-		const stepMessages = step.process.map(action => ({
+		const stepMessages = step.process.map((action: Process) => ({
 			title: getActionTitle(action),
 			body: getActionBody(action),
 			status: getStepStatus(action),
@@ -37,8 +59,13 @@ export const updateLifiSteps = ({ swapDispatch, selectedRoute }) => {
 		return [...acc, ...stepMessages]
 	}, [])
 
-	swapDispatch({
-		type: 'SET_SWAP_STEPS',
-		payload: messages,
-	})
+	if (messages.length && !messages[messages.length - 1]?.title.includes('user rejected')) {
+		swapDispatch({ type: 'SET_SWAP_STEPS', payload: messages })
+		trackEvent({
+			category: category.SwapCard,
+			action: action.SwapRejected,
+			label: 'User rejected swap',
+			data: { provider: 'lifi', error: error },
+		})
+	}
 }

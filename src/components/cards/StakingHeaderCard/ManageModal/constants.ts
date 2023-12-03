@@ -13,11 +13,11 @@ export enum SwapType {
 }
 
 export enum Status {
-	input = 0,
+	input = 'input',
 	stake = 1,
 	loading = 2,
 	success = 'success',
-	failure = 'failure',
+	failed = 'failed',
 	progress = 'progress',
 	canceled = 5,
 	balanceError = 6,
@@ -27,30 +27,16 @@ export enum Status {
 	withdraw = 10,
 }
 
-interface ButtonMessages {
-	[Status.input]: string
-	[Status.stake]: string
-	[Status.withdraw]: string
-	[Status.loading]: string
-	[Status.success]: string
-	[Status.failure]: string
-	[Status.canceled]: string
-	[Status.balanceError]: string
-	[Status.unknownError]: string
-	[Status.noRoute]: string
-	[Status.thisMakeTakeAWhile]: string
-}
-
-export const buttonMessages: ButtonMessages = {
-	[Status.input]: 'Enter amount to swap',
-	[Status.stake]: 'Stake',
-	[Status.withdraw]: 'Withdraw',
+export const buttonMessages: { [key in Status]: string } = {
+	[Status.input]: 'button.enterAmountToSwap',
+	[Status.stake]: 'button.stake',
+	[Status.withdraw]: 'button.withdraw',
 	[Status.loading]: '',
-	[Status.success]: 'Swap started successfully!',
-	[Status.failure]: 'Failure',
-	[Status.canceled]: 'Canceled by user',
-	[Status.balanceError]: 'Insufficient balance',
-	[Status.unknownError]: 'Something went wrong.',
-	[Status.noRoute]: 'No route found',
-	[Status.thisMakeTakeAWhile]: 'Hang tight, this may take a while…',
+	[Status.success]: 'button.swapStartedSuccessfully',
+	[Status.failed]: 'button.failure',
+	[Status.canceled]: 'button.canceledByUser',
+	[Status.balanceError]: 'button.insufficientBalance',
+	[Status.unknownError]: 'button.somethingWentWrong',
+	[Status.noRoute]: 'button.noRoutesFound',
+	[Status.thisMakeTakeAWhile]: 'button.mayTakeAWhile',
 }

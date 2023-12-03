@@ -9,12 +9,17 @@ import { SelectionContext } from '../../../hooks/SelectionContext'
 import { InsuranceProvider } from './InsuranceContext'
 import { useSwapCardEffects } from './SwapCardEffects'
 import { SwapInput } from './SwapInput/SwapInput'
-import { SwapProgress } from '../../layout/SwapProgress/SwapProgress'
+import { SwapProgress } from './SwapProgress/SwapProgress'
 import { getCardTitleByStatus } from './handlers/getCardTitleByStatus'
 import { SwapSettingsModal } from './SwapSettingsModal/SwapSettingsModal'
 import { Button } from '../../buttons/Button/Button'
+import { SwapCardStage } from './swapReducer/types'
+import { useTranslation } from 'react-i18next'
+import { ContactSupportCard } from '../ContactSupportCard/ContactSupportCard'
+import posthog from 'posthog-js'
 
 export const SwapCard: FC<SwapCardProps> = () => {
+	const { t } = useTranslation()
 	const { selection, dispatch } = useContext(SelectionContext)
 	const [swapState, swapDispatch] = useSwapReducer(selection)
 	const { address } = useAccount()
@@ -24,18 +29,31 @@ export const SwapCard: FC<SwapCardProps> = () => {
 		swapDispatch({ type: 'RESET_AMOUNTS', direction: 'from' })
 		swapDispatch({ type: 'RESET_AMOUNTS', direction: 'to' })
 		swapDispatch({ type: 'CLEAR_ROUTES' })
-		swapDispatch({ type: 'SET_SWAP_STAGE', payload: 'input' })
-		swapDispatch({ type: 'SET_SWAP_STATUS', payload: 'pending' })
+		swapDispatch({ type: 'SET_SWAP_STAGE', payload: SwapCardStage.input })
 		swapDispatch({ type: 'SET_SWAP_STEPS', payload: [] })
 	}
 
-	const toggleInsurance = routeId => swapDispatch({ type: 'TOGGLE_INSURANCE', payload: routeId })
+	const toggleInsurance = (routeId: string) => swapDispatch({ type: 'TOGGLE_INSURANCE', payload: routeId })
 	useSwapCardEffects({ swapState, swapDispatch, address, dispatch, typingTimeoutRef })
+
+	function handleContactSupportGoBackClick() {
+		swapDispatch({ type: 'SET_SWAP_STAGE', payload: SwapCardStage.failed })
+	}
+
+	const infoToCopy = { ...swapState.selectedRoute, replay_id: posthog.get_distinct_id(), session_id: posthog.get_session_id() }
+
+	const renderSwapStage = {
+		[SwapCardStage.input]: <SwapInput swapState={swapState} swapDispatch={swapDispatch} />,
+		[SwapCardStage.progress]: <SwapProgress swapState={swapState} handleGoBack={handleGoBack} swapDispatch={swapDispatch} />,
+		[SwapCardStage.success]: <SwapProgress swapState={swapState} handleGoBack={handleGoBack} swapDispatch={swapDispatch} />,
+		[SwapCardStage.failed]: <SwapProgress swapState={swapState} handleGoBack={handleGoBack} swapDispatch={swapDispatch} />,
+		[SwapCardStage.contactSupport]: <ContactSupportCard handleGoBackClick={handleContactSupportGoBackClick} infoToCopy={infoToCopy} />,
+	}
 
 	return (
 		<InsuranceProvider toggleInsurance={toggleInsurance}>
 			<div className={`card ${classNames.container}`}>
-				<CardHeader title={getCardTitleByStatus(swapState.status)}>
+				<CardHeader title={getCardTitleByStatus(swapState.stage)}>
 					<div className={classNames.cardHeader}>
 						<Button
 							variant="black"
@@ -45,9 +63,7 @@ export const SwapCard: FC<SwapCardProps> = () => {
 						/>
 					</div>
 				</CardHeader>
-				<div className={classNames.swapContainer}>
-					{swapState.stage === 'input' ? <SwapInput swapState={swapState} swapDispatch={swapDispatch} /> : <SwapProgress swapState={swapState} handleGoBack={handleGoBack} />}
-				</div>
+				<div className={classNames.swapContainer}>{renderSwapStage[swapState.stage]}</div>
 			</div>
 			<SwapSettingsModal
 				show={swapState.settingsModalOpen}

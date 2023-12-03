@@ -16,7 +16,7 @@ dayjs.updateLocale('en', {
 		hh: '%dh',
 		d: 'a day',
 		dd: '%dd',
-		M: 'a month',
+		M: '1 mon',
 		MM: '%dm',
 		y: 'a year',
 		yy: '%dy',
@@ -24,7 +24,7 @@ dayjs.updateLocale('en', {
 })
 export default dayjs
 
-function isValidNumber(number: string | number) {
+export function isValidNumber(number: string | number) {
 	if (typeof number === 'string') {
 		return number != ''
 	} else {
@@ -87,7 +87,7 @@ export const removeNonNumeric = (str: string): string => str.replace(/\D/g, '')
 
 export const removeNonAlphaNumeric = (str: string): string => str.replace(/\W/g, '')
 
-export const addingAmountDecimals = (number: number | string, decimals: number): string | null => {
+export function addingAmountDecimals(number: number | string, decimals: number): string | null {
 	if (!isValidNumber(number) || !isValidNumber(decimals)) return null
 	let bNumber = new BigNumber(number)
 
@@ -100,18 +100,18 @@ export const addingAmountDecimals = (number: number | string, decimals: number):
 }
 
 export const secondsConverter = (seconds: number): string => {
-	if (seconds > 60) return `${Math.floor(seconds / 60)}m ${seconds % 60 ? `${(seconds % 60).toString()}s` : ''}`
+	if (seconds > 60) return `${Math.round(seconds / 60)}m ${seconds % 60 ? `${Math.round(seconds % 60).toString()}s` : ''}`
 	return `${seconds}s`
 }
 
-export const numberToFormatString = (number: number, decimals = 4, isTransformNeeded = false): string => {
-	if (number === undefined || number === null) return
+export const numberToFormatString = (number: number, decimals = 4, isTransformNeeded = false): string | null => {
+	if (number === undefined || number === null) return null
 	const result = parseFloat(number.toFixed(decimals))
-	if (isTransformNeeded && result === 0) return '< 0.01'
+	if (isTransformNeeded && result <= 0.001) return '< 0.01'
 	return result?.toString()
 }
 
-export function roundNumberByDecimals(number: number | string, decimals = 4): string | null {
+export function roundNumberByDecimals(number: number | string | undefined | null, decimals = 4): string | null {
 	if (!isValidNumber(number) || !isValidNumber(decimals)) return null
 	const bigNumber = new BigNumber(number)
 	const decimalPart = bigNumber.toString().split('.')[1]
