@@ -1,5 +1,6 @@
 export const config = {
 	baseURL: process.env.CONCERO_API_URL!,
+	WEBAPP_URL: process.env.WEBAPP_URL!,
 	headers: { 'Content-Type': 'application/json' },
 	CRYPTOPANIC_API_KEY: process.env.CRYPTOPANIC_API_KEY!,
 	LIFI_INTEGRATOR: process.env.LIFI_INTEGRATOR!,
